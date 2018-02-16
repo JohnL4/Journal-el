@@ -1,0 +1,9 @@
+* Overview
+
+  Emacs-Lisp code to implement a journal in keeping with the Personal Software Process (PSP).
+
+  Inspired by somebody else's script and journal, but (a) it's evolved quite a bit since then, and (b) you can use it to
+  just journal whatever you want (mostly "interruptions"), with timestamps.
+  
+
+  
