@@ -5,6 +5,8 @@
 ;;; When ending an entry, you only need to specify the phase, not the rest of
 ;;; the classification tags.
 
+;;; `journal-append-new-entry' is where the journal file is first loaded, in case you want to set mode variables there.
+
 ;;; (require 'debug-log)
 
                                         ;TODO:  store classification tree at
@@ -31,9 +33,17 @@
 
 (require 'lusk-tree)
 
+(defun journal-home ()
+  "Cross-platform way to get the user's home path (I hope)"
+  (if (and (getenv "HOMEPATH") (< 0 (length (getenv "HOMEPATH"))))
+      (concat (getenv "HOMEDRIVE") (getenv "HOMEPATH")) ;Windows
+    (getenv "HOME")                                     ;Everybody else
+    )
+  )
+
                                         ;Drive U: is the backed-up, private
                                         ;drive.
-(defvar journal-dir "C:/Personal/Journals"
+(defvar journal-dir (concat (journal-home) "/Documents/Journals") ; "C:/Personal/Journals"
   "*The directory where journal files will be stored.")
 
 (defun journal-filename (time)
@@ -48,17 +58,21 @@
    "-- <event-type> ::= \"b\" | \"e\"\n"
    "--    (Begin | End)\n"
    "-- <phase-name> ::= (one of the following, or arbitrary text)\n"
+   "--    ad - administrative\n"
+   "--    mt - meeting\n"
    "--    rs - research\n"
-   "--    in - interrupt\n"
-   "--    if - infrastructure (code or otherwise technical)\n"
-   "--    df - defect\n"
    "--    ds - design\n"
+   "--    if - infrastructure (code or otherwise technical)\n"
    "--    cd - code\n"
-   "--    cp - compile\n"
+   "--    cp - compile\n"               ;Probably important for big, slow compiles, like system builds and card decks,
+                                        ;etc., but not so much these days.
    "--    te - test\n"
    "--    db - debug\n"
+   "--    dc - documentation\n"
+   "--    cr - code review (usually of somebody else's code)\n"
    "--    pm - post mortem\n"
-   "--    ad - administrative\n"
+   "--    df - defect\n"
+   "--    in - interrupt\n"
    "-- (<classification-tags> is frequently the same as arbitrary text)\n"
    "\n"
    )
@@ -66,7 +80,8 @@
 
 (defun journal-timestamp (time)
   "*Journal timestamp for `time', as in `current-time'."
-  (format-time-string "%Y-%m-%d (%a) %H:%M" time)
+  (format-time-string "%Y-%m-%d (%a) %H:%M:%S" time) ;Added seconds for logging ("did such-and-such") while testing
+                                                     ;software
   )
 
                                         ;journal-parse-timestamp is
@@ -176,7 +191,8 @@ BEGIN-OR-END is a string (expected to be \"b\" or \"e\"), default \"b\"."
         (setq buffer-is-new t))
     (find-file (journal-filename cur-time))
     (if buffer-is-new
-        (progn
+        (progn                          ;TODO: should probably make this buffer initialization stuff a separate
+                                        ;function.
           (local-set-key [f7] 'journal-scan-new-and-highlight-errors)
           (local-set-key [S-f7] 'journal-scan-all-and-highlight-errors)
           (local-set-key [f6] 'journal-clear-error-highlighting)
@@ -191,6 +207,7 @@ BEGIN-OR-END is a string (expected to be \"b\" or \"e\"), default \"b\"."
           (setq comment-indent-function 'journal-indent)
 
           (auto-fill-mode 1)
+          (subword-mode 1)              ;Move by case boundary in words.
           )
       )
     (goto-char (point-max))
